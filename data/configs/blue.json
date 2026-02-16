@@ -1,0 +1,7 @@
+{
+  "font": "Poppins",
+  "color": "#ffffff",
+  "duration": 5,
+  "template": "{name} tipped ₹{amount}",
+  "fontFamily": "Poppins"
+}

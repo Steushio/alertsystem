@@ -1,0 +1,8 @@
+{
+  "font": "Poppins",
+  "color": "#00ff1e",
+  "duration": 10,
+  "template": "{name} dropped ₹{amount}",
+  "fontFamily": "Arial",
+  "gif": "/uploads/anya.gif"
+}
