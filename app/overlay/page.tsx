@@ -24,13 +24,19 @@ function OverlayContent() {
   // 🔒 Prevent repeated sound
   const soundPlayedRef = useRef(false);
 
-  // fetch config once
+  // fetch config periodically to reflect dashboard changes
   useEffect(() => {
     if (!token) return;
 
-    fetch("/api/config")
-      .then(res => res.json())
-      .then(setConfig);
+    const fetchConfig = () => {
+      fetch(`/api/config?token=${token}`)
+        .then(res => res.json())
+        .then(setConfig);
+    };
+
+    fetchConfig();
+    const interval = setInterval(fetchConfig, 10000); // sync every 10s
+    return () => clearInterval(interval);
   }, [token]);
 
   // 🔊 init & unlock audio ONCE
