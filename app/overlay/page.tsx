@@ -9,7 +9,13 @@ function OverlayContent() {
 
   /* eslint-disable @next/next/no-img-element */
   const [alert, setAlert] = useState<{ name: string; amount: string } | null>(null);
-  const [config, setConfig] = useState<{ alertText: string } | null>(null);
+  const [config, setConfig] = useState<{
+    font: string;
+    color: string;
+    template: string;
+    gif?: string;
+    sound?: string;
+  } | null>(null);
 
   // 🔊 Web Audio refs (OBS-safe)
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -37,7 +43,14 @@ function OverlayContent() {
         const ctx = new AudioCtx();
         audioCtxRef.current = ctx;
 
-        const res = await fetch("/sounds/anya.wav");
+        // Use configured sound or fallback
+        const soundUrl = config?.sound || "/sounds/anya.wav";
+        // Handle Vercel Blob URLs vs local paths
+        const finalSoundUrl = soundUrl.startsWith("http") || soundUrl.startsWith("/")
+          ? soundUrl
+          : `/${soundUrl}`;
+
+        const res = await fetch(finalSoundUrl);
         const arrayBuffer = await res.arrayBuffer();
 
         const buffer = await new Promise<AudioBuffer>((resolve, reject) => {
@@ -54,8 +67,10 @@ function OverlayContent() {
       }
     };
 
-    initAudio();
-  }, []);
+    if (config) {
+      initAudio();
+    }
+  }, [config]);
 
   // poll alerts
   useEffect(() => {
@@ -95,11 +110,17 @@ function OverlayContent() {
 
   if (!alert || !config) return null;
 
-  const template = config.alertText || "{name} tipped ₹{amount}";
+  const template = config.template || "{name} tipped ₹{amount}";
 
   const text = template
     .replace("{name}", alert.name)
     .replace("{amount}", alert.amount);
+
+  const getGifUrl = (url?: string) => {
+    if (!url) return "/gifs/anya.gif";
+    if (url.startsWith("http") || url.startsWith("/")) return url;
+    return `/${url}`;
+  };
 
   return (
     <div
@@ -113,11 +134,12 @@ function OverlayContent() {
         alignItems: "center",
         gap: 20,
         pointerEvents: "none",
+        fontFamily: config.font, // Apply font
       }}
     >
       {/* GIF */}
       <img
-        src="/gifs/anya.gif"
+        src={getGifUrl(config.gif)}
         alt="alert gif"
         style={{
           width: 300,
@@ -131,9 +153,10 @@ function OverlayContent() {
         style={{
           fontSize: 48,
           fontWeight: "bold",
-          color: "lime",
+          color: config.color, // Apply color
           textShadow: "0 0 10px black",
           zIndex: 11,
+          textAlign: "center",
         }}
       >
         {text}

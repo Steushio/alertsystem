@@ -6,12 +6,12 @@ import { signOut } from "next-auth/react";
 const FONTS = ["Arial", "Poppins", "Montserrat", "Inter"];
 
 interface Config {
-  fontFamily: string;
+  font: string; // Renamed from fontFamily to match backend
   color: string;
   duration: number;
   gif: string;
   sound: string;
-  template?: string;
+  template?: string; // Alert text template
   [key: string]: string | number | undefined;
 }
 
@@ -28,6 +28,7 @@ export default function DashboardClient() {
   useEffect(() => {
     async function load() {
       const cfg = await fetch("/api/config").then(r => r.json());
+      // Handle legacy fontFamily or incorrect structure if needed, but primarily relying on Store
       setConfig(cfg);
 
       try {
@@ -69,6 +70,7 @@ export default function DashboardClient() {
     setConfig(next);
     setGifFile(null);
     setSoundFile(null);
+    alert("Saved!");
   }
 
   if (!config) return <div style={{ padding: 40 }}>Loading…</div>;
@@ -87,6 +89,12 @@ export default function DashboardClient() {
   const previewText = (config.template || "{name} tipped ₹{amount}")
     .replace("{name}", "Someone")
     .replace("{amount}", "100");
+
+  // Fix GIF URL: If it starts with http, use it as is. If not, treat as relative path (for legacy) or public URL
+  const getGifUrl = (url: string) => {
+    if (url.startsWith("http") || url.startsWith("/")) return url;
+    return `/${url}`; // Fallback for local files if any left
+  };
 
   return (
     <div className="page">
@@ -128,10 +136,21 @@ export default function DashboardClient() {
 
         <h2>🎛 Alert Dashboard</h2>
 
+        <label>Alert Text Template</label>
+        <input
+          type="text"
+          placeholder="{name} tipped ₹{amount}"
+          value={config.template || ""}
+          onChange={e => update("template", e.target.value)}
+        />
+        <small style={{ color: "#9ca3af", marginTop: -4, fontSize: 12 }}>
+          Use <b>{"{name}"}</b> and <b>{"{amount}"}</b> variables.
+        </small>
+
         <label>Font</label>
         <select
-          value={config.fontFamily}
-          onChange={e => update("fontFamily", e.target.value)}
+          value={config.font}
+          onChange={e => update("font", e.target.value)}
         >
           {FONTS.map(f => (
             <option key={f}>{f}</option>
@@ -151,8 +170,6 @@ export default function DashboardClient() {
           value={config.duration}
           onChange={e => update("duration", +e.target.value)}
         />
-
-        {/* MESSAGE TEMPLATE HIDDEN */}
 
         <label>GIF</label>
         <select
@@ -184,7 +201,7 @@ export default function DashboardClient() {
           onChange={e => setSoundFile(e.target.files?.[0] || null)}
         />
 
-        <button className="save" onClick={save}>Save</button>
+        <button className="save" onClick={save}>Save Changes</button>
         <button
           className="logout"
           onClick={() => signOut({ callbackUrl: "/login" })}
@@ -196,7 +213,7 @@ export default function DashboardClient() {
       <div className="preview">
         {config.gif && (
           <img
-            src={config.gif.startsWith("/") ? config.gif : `/${config.gif}`}
+            src={getGifUrl(config.gif)}
             style={{ maxHeight: 200 }}
             alt="GIF preview"
           />
@@ -204,10 +221,12 @@ export default function DashboardClient() {
 
         <div
           style={{
-            fontFamily: config.fontFamily,
+            fontFamily: config.font,
             color: config.color,
             fontWeight: "bold",
             textAlign: "center",
+            fontSize: 24,
+            marginTop: 20,
           }}
         >
           {previewText}
@@ -273,6 +292,7 @@ export default function DashboardClient() {
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           gap: 12px;
         }
       `}</style>
