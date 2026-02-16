@@ -22,6 +22,13 @@ export async function createUser(username: string, password: string) {
   };
 
   await kv.set(`user:${username}`, user);
+  await kv.set(`token:${user.token}`, username); // 👈 INDEX TOKEN TO USER
+}
+
+export async function getUserByToken(token: string): Promise<User | null> {
+  const username = await kv.get<string>(`token:${token}`);
+  if (!username) return null;
+  return getUser(username);
 }
 
 export async function getUser(username: string): Promise<User | null> {
