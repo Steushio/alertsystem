@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function OverlayPage() {
+function OverlayContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -139,5 +139,13 @@ export default function OverlayPage() {
         {text}
       </div>
     </div>
+  );
+}
+
+export default function OverlayPage() {
+  return (
+    <Suspense fallback={null}>
+      <OverlayContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,5 @@
 import NextAuth from "next-auth/next";
-import { Session } from "next-auth";
+import { Session, AuthOptions } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getUser } from "@/lib/userStore";
@@ -41,7 +41,7 @@ export const authOptions = {
       return session;
     },
   },
-};
+} as AuthOptions;
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

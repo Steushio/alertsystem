@@ -31,10 +31,10 @@ export default function Register() {
   );
 }
 
-const box = {
-  maxWidth: 300,
-  margin: "100px auto",
+const box: React.CSSProperties = {
+  maxWidth: 400,
+  margin: "40px auto",
   display: "flex",
   flexDirection: "column",
-  gap: 10,
+  gap: 20,
 };
