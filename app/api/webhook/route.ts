@@ -10,18 +10,23 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
+  console.log("LOG: Webhook received body:", JSON.stringify(body));
 
-  // MacroDroid sends message text
+  // MacroDroid sends message text (usually notification title/body)
   const message: string = body.message || "";
+  console.log("LOG: Webhook message text:", message);
 
   // Extract amount (₹10 / Rs 10 / received ₹100)
-  const amountMatch = message.match(/(?:₹|Rs\.?)\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+  // Using Unicode \u20B9 for ₹ to avoid encoding issues
+  const amountMatch = message.match(/(?:\u20B9|Rs\.?)\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
 
   // Extract name (from Rahul / from bhun)
   const nameMatch = message.match(/from\s+([a-z0-9\s]+?)(?:\s+|$)/i);
 
   const amount = amountMatch ? amountMatch[1] : "0";
   const name = nameMatch ? nameMatch[1].trim() : "Someone";
+
+  console.log("LOG: Parsed data:", { name, amount });
 
   await pushAlert(token, { name, amount: parseFloat(amount) });
 
