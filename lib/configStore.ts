@@ -27,8 +27,8 @@ export async function getConfig(userId: string): Promise<AlertConfig> {
     color: config.color || "#ffffff",
     duration: config.duration || 5,
     template: config.template || config.alertText || "{name} tipped ₹{amount}",
-    gif: config.gif,
-    sound: config.sound,
+    gif: config.gif || "/gifs/anya.gif",
+    sound: config.sound || "/sounds/anya.wav",
   };
 }
 

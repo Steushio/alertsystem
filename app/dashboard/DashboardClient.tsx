@@ -17,7 +17,7 @@ interface Config {
 
 export default function DashboardClient() {
   const [config, setConfig] = useState<Config | null>(null);
-  const [assets, setAssets] = useState<{ gifs: string[]; sounds: string[] }>({
+  const [assets, setAssets] = useState<{ gifs: { name: string; url: string }[]; sounds: { name: string; url: string }[] }>({
     gifs: [],
     sounds: [],
   });
@@ -67,6 +67,12 @@ export default function DashboardClient() {
       body: JSON.stringify(next),
     });
 
+    // Refresh assets to show new upload in dropdown
+    try {
+      const ast = await fetch("/api/assets").then(r => r.json());
+      setAssets(ast);
+    } catch { }
+
     setConfig(next);
     setGifFile(null);
     setSoundFile(null);
@@ -92,6 +98,7 @@ export default function DashboardClient() {
 
   // Fix GIF URL: If it starts with http, use it as is. If not, treat as relative path (for legacy) or public URL
   const getGifUrl = (url: string) => {
+    if (!url) return "/gifs/anya.gif";
     if (url.startsWith("http") || url.startsWith("/")) return url;
     return `/${url}`; // Fallback for local files if any left
   };
@@ -177,7 +184,7 @@ export default function DashboardClient() {
           onChange={e => update("gif", e.target.value)}
         >
           {assets.gifs.map(g => (
-            <option key={g} value={g}>{g}</option>
+            <option key={g.url} value={g.url}>{g.name}</option>
           ))}
         </select>
         <input
@@ -192,7 +199,7 @@ export default function DashboardClient() {
           onChange={e => update("sound", e.target.value)}
         >
           {assets.sounds.map(s => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s.url} value={s.url}>{s.name}</option>
           ))}
         </select>
         <input
@@ -211,25 +218,28 @@ export default function DashboardClient() {
       </div>
 
       <div className="preview">
-        {config.gif && (
-          <img
-            src={getGifUrl(config.gif)}
-            style={{ maxHeight: 200 }}
-            alt="GIF preview"
-          />
-        )}
+        <div className="preview-container">
+          {config.gif && (
+            <img
+              src={getGifUrl(config.gif)}
+              style={{ maxHeight: 200, width: "auto" }}
+              alt="GIF preview"
+              onError={() => console.error("Failed to load GIF:", config.gif)}
+            />
+          )}
 
-        <div
-          style={{
-            fontFamily: config.font,
-            color: config.color,
-            fontWeight: "bold",
-            textAlign: "center",
-            fontSize: 24,
-            marginTop: 20,
-          }}
-        >
-          {previewText}
+          <div
+            style={{
+              fontFamily: config.font,
+              color: config.color,
+              fontWeight: "bold",
+              textAlign: "center",
+              fontSize: 24,
+              marginTop: 20,
+            }}
+          >
+            {previewText}
+          </div>
         </div>
       </div>
 
