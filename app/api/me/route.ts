@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ error: "Not logged in" }, { status: 401 });
   }
 
-  const user = getUser(session.user.id);
+  const user = await getUser(session.user.id);
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
