@@ -10,7 +10,7 @@ export type AlertConfig = {
 };
 
 export async function getConfig(userId: string): Promise<AlertConfig> {
-  const config = await kv.get<AlertConfig>(`config:${userId}`);
+  const config = await kv.get<any>(`config:${userId}`);
 
   if (!config) {
     return {
@@ -21,7 +21,15 @@ export async function getConfig(userId: string): Promise<AlertConfig> {
     };
   }
 
-  return config;
+  // Legacy migration
+  return {
+    font: config.font || config.fontFamily || "Poppins",
+    color: config.color || "#ffffff",
+    duration: config.duration || 5,
+    template: config.template || config.alertText || "{name} tipped ₹{amount}",
+    gif: config.gif,
+    sound: config.sound,
+  };
 }
 
 export async function saveConfig(userId: string, config: AlertConfig) {
