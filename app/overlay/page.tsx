@@ -29,7 +29,7 @@ function OverlayContent() {
     if (!token) return;
 
     const fetchConfig = () => {
-      fetch(`/api/config?token=${token}`)
+      fetch(`/api/config?token=${token}&_=${Date.now()}`)
         .then(res => res.json())
         .then(setConfig);
     };
@@ -83,7 +83,7 @@ function OverlayContent() {
     if (!token) return;
 
     const interval = setInterval(async () => {
-      const res = await fetch(`/api/alert?token=${token}`);
+      const res = await fetch(`/api/alert?token=${token}&_=${Date.now()}`);
       const data = await res.json();
 
       if (data.alert) {
@@ -120,7 +120,7 @@ function OverlayContent() {
 
   const text = template
     .replace("{name}", alert.name)
-    .replace("{amount}", alert.amount);
+    .replace("{amount}", String(alert.amount));
 
   const getGifUrl = (url?: string) => {
     if (!url) return "/gifs/anya.gif";

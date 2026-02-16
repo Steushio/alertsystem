@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { getConfig, saveConfig } from "@/lib/configStore";
