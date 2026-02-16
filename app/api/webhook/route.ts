@@ -14,13 +14,13 @@ export async function POST(req: Request) {
   // MacroDroid sends message text
   const message: string = body.message || "";
 
-  // Extract amount (₹10 / Rs 10)
-  const amountMatch = message.match(/(₹|Rs\.?)\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+  // Extract amount (₹10 / Rs 10 / received ₹100)
+  const amountMatch = message.match(/(?:₹|Rs\.?)\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
 
-  // Extract name (from Rahul)
-  const nameMatch = message.match(/from\s+(.+)$/i);
+  // Extract name (from Rahul / from bhun)
+  const nameMatch = message.match(/from\s+([a-z0-9\s]+?)(?:\s+|$)/i);
 
-  const amount = amountMatch ? amountMatch[2] : "0";
+  const amount = amountMatch ? amountMatch[1] : "0";
   const name = nameMatch ? nameMatch[1].trim() : "Someone";
 
   await pushAlert(token, { name, amount: parseFloat(amount) });
