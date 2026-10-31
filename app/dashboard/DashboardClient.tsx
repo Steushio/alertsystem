@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 
@@ -24,12 +26,47 @@ export default function DashboardClient() {
   const [user, setUser] = useState<{ id: string; token?: string } | null>(null);
   const [gifFile, setGifFile] = useState<File | null>(null);
   const [soundFile, setSoundFile] = useState<File | null>(null);
+  const [testStatus, setTestStatus] = useState<string | null>(null);
+
+  async function sendTestAlert() {
+    if (!user?.token) {
+      alert("No user token found. Please log out and log in again.");
+      return;
+    }
+    setTestStatus("Sending test alert...");
+    try {
+      const res = await fetch(`/api/webhook?token=${user.token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Test Donor", amount: 100 }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setTestStatus("✅ Test alert queued! Check your overlay tab or OBS.");
+        setTimeout(() => setTestStatus(null), 5000);
+      } else {
+        setTestStatus(`❌ Error: ${data.error || "Failed to trigger alert"}`);
+      }
+    } catch (err: unknown) {
+      setTestStatus(
+        `❌ Error: ${err instanceof Error ? err.message : "Failed to trigger alert"}`
+      );
+    }
+  }
 
   useEffect(() => {
     async function load() {
       const cfg = await fetch("/api/config").then(r => r.json());
-      // Handle legacy fontFamily or incorrect structure if needed, but primarily relying on Store
-      setConfig(cfg);
+      // Merge over defaults so a failed/partial config never yields empty inputs.
+      setConfig({
+        font: "Poppins",
+        color: "#ffffff",
+        duration: 5,
+        gif: "/gifs/anya.gif",
+        sound: "/sounds/anya.wav",
+        template: "{name} tipped ₹{amount}",
+        ...cfg,
+      });
 
       try {
         const ast = await fetch("/api/assets").then(r => r.json());
@@ -139,6 +176,30 @@ export default function DashboardClient() {
           </button>
         </div>
 
+        <button
+          type="button"
+          onClick={sendTestAlert}
+          style={{
+            background: "#6366f1",
+            color: "#ffffff",
+            marginTop: 8,
+            cursor: "pointer",
+          }}
+        >
+          ⚡ Send Test Alert
+        </button>
+        {testStatus && (
+          <div
+            style={{
+              fontSize: 12,
+              marginTop: 4,
+              color: testStatus.startsWith("✅") ? "#4ade80" : "#f87171",
+            }}
+          >
+            {testStatus}
+          </div>
+        )}
+
         <hr />
 
         <h2>🎛 Alert Dashboard</h2>
@@ -156,7 +217,7 @@ export default function DashboardClient() {
 
         <label>Font</label>
         <select
-          value={config.font}
+          value={config.font ?? "Poppins"}
           onChange={e => update("font", e.target.value)}
         >
           {FONTS.map(f => (
@@ -167,20 +228,21 @@ export default function DashboardClient() {
         <label>Text Color</label>
         <input
           type="color"
-          value={config.color}
+          value={config.color ?? "#ffffff"}
           onChange={e => update("color", e.target.value)}
         />
 
-        <label>Duration (ms)</label>
+        <label>Duration (seconds)</label>
         <input
           type="number"
-          value={config.duration}
+          min={1}
+          value={config.duration ?? 5}
           onChange={e => update("duration", +e.target.value)}
         />
 
         <label>GIF</label>
         <select
-          value={config.gif}
+          value={config.gif ?? "/gifs/anya.gif"}
           onChange={e => update("gif", e.target.value)}
         >
           {assets.gifs.map(g => (
@@ -195,7 +257,7 @@ export default function DashboardClient() {
 
         <label>Sound</label>
         <select
-          value={config.sound}
+          value={config.sound ?? "/sounds/anya.wav"}
           onChange={e => update("sound", e.target.value)}
         >
           {assets.sounds.map(s => (

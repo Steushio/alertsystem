@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { getConfig, saveConfig } from "@/lib/configStore";
 import { NextResponse } from "next/server";
 
@@ -36,8 +36,8 @@ export async function POST(req: Request) {
   const { getUser } = await import("@/lib/userStore");
   const user = await getUser(session.user.id);
   if (user?.token) {
-    const { kv } = await import("@vercel/kv");
-    await kv.set(`token:${user.token}`, user.id);
+    const { getKv } = await import("@/lib/kv");
+    await getKv().set(`token:${user.token}`, user.id);
   }
 
   return NextResponse.json({ ok: true });
