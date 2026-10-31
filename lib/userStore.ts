@@ -52,6 +52,17 @@ export async function upgradePassword(user: User, password: string) {
   });
 }
 
+/**
+ * Replace a user's password. The alert token is left untouched so an existing
+ * OBS overlay URL keeps working after a password change.
+ */
+export async function changePassword(user: User, newPassword: string) {
+  await getKv().set(`user:${user.username}`, {
+    ...user,
+    password: await bcrypt.hash(newPassword, 10),
+  });
+}
+
 export async function getUserByToken(token: string): Promise<User | null> {
   const username = await getKv().get<string>(`token:${token}`);
   if (!username) return null;

@@ -28,6 +28,52 @@ export default function DashboardClient() {
   const [soundFile, setSoundFile] = useState<File | null>(null);
   const [testStatus, setTestStatus] = useState<string | null>(null);
 
+  // 🔒 Change password form
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwStatus, setPwStatus] = useState<string | null>(null);
+  const [pwSaving, setPwSaving] = useState(false);
+
+  async function submitPasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (newPassword.length < 8) {
+      setPwStatus("❌ New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwStatus("❌ New passwords do not match.");
+      return;
+    }
+
+    setPwSaving(true);
+    setPwStatus("Updating…");
+    try {
+      const res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        setPwStatus("✅ Password updated. Use the new one next time you log in.");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        setPwStatus(`❌ ${data.error || "Could not update the password."}`);
+      }
+    } catch (err: unknown) {
+      setPwStatus(
+        `❌ ${err instanceof Error ? err.message : "Could not update the password."}`
+      );
+    } finally {
+      setPwSaving(false);
+    }
+  }
+
   async function sendTestAlert() {
     if (!user?.token) {
       alert("No user token found. Please log out and log in again.");
@@ -277,6 +323,56 @@ export default function DashboardClient() {
         >
           Logout
         </button>
+
+        <hr />
+
+        <h2>🔒 Change Password</h2>
+
+        <form className="pw" onSubmit={submitPasswordChange}>
+          <label>Current password</label>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
+          />
+
+          <label>New password</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+          />
+
+          <label>Confirm new password</label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+          />
+
+          <button type="submit" className="save" disabled={pwSaving}>
+            {pwSaving ? "Updating…" : "Update Password"}
+          </button>
+
+          {pwStatus && (
+            <div
+              style={{
+                fontSize: 12,
+                marginTop: 4,
+                color: pwStatus.startsWith("✅") ? "#4ade80" : "#f87171",
+              }}
+            >
+              {pwStatus}
+            </div>
+          )}
+
+          <small style={{ color: "#9ca3af", fontSize: 12 }}>
+            At least 8 characters. Your overlay and webhook URLs stay the same.
+          </small>
+        </form>
       </div>
 
       <div className="preview">
@@ -348,6 +444,15 @@ export default function DashboardClient() {
         }
         .save {
           margin-top: 10px;
+        }
+        .pw {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .pw label {
+          font-size: 13px;
+          opacity: 0.85;
         }
         .logout {
           background: #374151;
