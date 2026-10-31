@@ -10,20 +10,25 @@ export type User = {
 };
 
 export async function createUser(username: string, password: string) {
-  const exists = await getKv().exists(`user:${username}`);
+  const name = username.trim().toLowerCase();
+  if (!name) {
+    throw new Error("Username is required");
+  }
+
+  const exists = await getKv().exists(`user:${name}`);
   if (exists) {
     throw new Error("User already exists");
   }
 
   const user: User = {
-    id: username,
-    username,
+    id: name,
+    username: name,
     password: await bcrypt.hash(password, 10),
     token: crypto.randomUUID(),
   };
 
-  await getKv().set(`user:${username}`, user);
-  await getKv().set(`token:${user.token}`, username); // index token -> user
+  await getKv().set(`user:${name}`, user);
+  await getKv().set(`token:${user.token}`, name); // index token -> user
 }
 
 /**
@@ -55,4 +60,18 @@ export async function getUserByToken(token: string): Promise<User | null> {
 
 export async function getUser(username: string): Promise<User | null> {
   return getKv().get<User>(`user:${username}`);
+}
+
+/**
+ * Look a user up by the name they typed. Stored keys are lower-cased, so a
+ * login as "Steushio" must still resolve to the "steushio" record.
+ */
+export async function findUserByUsername(username: string): Promise<User | null> {
+  const exact = await getUser(username);
+  if (exact) return exact;
+
+  const lower = username.trim().toLowerCase();
+  if (!lower || lower === username) return null;
+
+  return getUser(lower);
 }

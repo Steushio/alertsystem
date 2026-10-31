@@ -1,7 +1,7 @@
 import type { AuthOptions, Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getUser, upgradePassword, verifyPassword } from "@/lib/userStore";
+import { findUserByUsername, upgradePassword, verifyPassword } from "@/lib/userStore";
 
 export const authOptions: AuthOptions = {
   // Required in production on Vercel. Falling back keeps local dev working.
@@ -18,7 +18,7 @@ export const authOptions: AuthOptions = {
       authorize: async (credentials) => {
         if (!credentials?.username || !credentials?.password) return null;
 
-        const user = await getUser(credentials.username);
+        const user = await findUserByUsername(credentials.username);
         if (!user) return null;
 
         const valid = await verifyPassword(user, credentials.password);
